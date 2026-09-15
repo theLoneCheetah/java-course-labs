@@ -114,6 +114,17 @@ public abstract class Account {
         pendingCommission = BigDecimal.ZERO;
     }
 
+    /**
+     * Служебный откат транзакций: прямое изменение баланса без применения правил конкретного типа счёта.
+     * Вызывается только классами из пакета {@code transaction}
+     */
+    public void applyRawDelta(BigDecimal delta) {
+        if (delta == null) {
+            throw new IllegalArgumentException("Delta не может быть null");
+        }
+        balance = balance.add(delta).setScale(BALANCE_SCALE, RoundingMode.HALF_UP);
+    }
+
     // Внутренняя проверка суммы операции с выбросом исключения
     protected void validateAmount(BigDecimal amount) throws BankException {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
