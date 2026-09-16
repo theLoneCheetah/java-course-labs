@@ -3,7 +3,6 @@ package bank;
 import account.Account;
 import exception.BankException;
 import time.SimulationClock;
-import transaction.Transaction;
 import transaction.TransactionHistory;
 import transaction.TransferTransaction;
 
