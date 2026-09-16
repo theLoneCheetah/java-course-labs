@@ -13,20 +13,26 @@ import transaction.TransferTransaction;
 import transaction.Transaction;
 import transaction.TransactionHistory;
 import transaction.WithdrawTransaction;
+import notification.Observable;
+import notification.Observer;
 
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Банк: хранит клиентов, счета и историю транзакций,
  * задаёт условия (ставки, комиссии, лимиты) и выполняет операции
  */
-public class Bank {
+public class Bank implements Observable {
 
     private final UUID id;
     private final String name;
@@ -52,6 +58,8 @@ public class Bank {
     private BigDecimal creditLimit = new BigDecimal("100000");
     private BigDecimal creditDailyCommission = new BigDecimal("10");
     private BigDecimal doubtfulOperationLimit = new BigDecimal("10000");
+
+    private final Set<Observer> observers = new LinkedHashSet<>();   // подписчики на уведомления
 
     // Инициализация симулятором часов
     public Bank(String name, Clock clock) {
@@ -226,6 +234,31 @@ public class Bank {
         }
     }
 
+    // Наблюдатели
+
+    // Добавить подписчика
+    @Override
+    public void subscribe(Observer observer) {
+        if (observer == null) {
+            throw new IllegalArgumentException("Наблюдатель обязателен");
+        }
+        observers.add(observer);
+    }
+
+    // Отписать
+    @Override
+    public void unsubscribe(Observer observer) {
+        observers.remove(observer);
+    }
+
+    // Разослать сообщение подписчикам
+    @Override
+    public void notifyObservers(String message) {
+        for (Observer observer : observers) {
+            observer.update("[" + name + "] " + message);
+        }
+    }
+
     // Изменение условий
 
     public BigDecimal getDebitAnnualRate() {
@@ -238,6 +271,7 @@ public class Bank {
             throw new IllegalArgumentException("Ставка не может быть отрицательной");
         }
         this.debitAnnualRate = newRate;
+        notifyObservers("Изменена ставка по дебетовым счетам: " + newRate);   // уведомление
     }
 
     public BigDecimal getCreditLimit() {
@@ -250,6 +284,7 @@ public class Bank {
             throw new IllegalArgumentException("Кредитный лимит не может быть отрицательным");
         }
         this.creditLimit = newLimit;
+        notifyObservers("Изменён кредитный лимит: " + newLimit);   // уведомление
     }
 
     public BigDecimal getCreditDailyCommission() {

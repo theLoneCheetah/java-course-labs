@@ -1,13 +1,20 @@
 package client;
 
+import notification.NotificationChannel;
+import notification.Observer;
+
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * Банковский клиент, id, имя и фамилия неизменяемые
  * Адрес, номер телефона и паспорт могут быть внесены позже
- * Без адреса и паспорта клиент считается "сомнительным"
+ * Без адреса и паспорта клиент считается "сомнительным".
+ * Реализует Observer — получает уведомления от банка и рассылает их
  */
-public class Client {
+public class Client implements Observer {
 
     private final UUID id;   // UUID обеспечивает неизменяемость
     private final String firstName;
@@ -16,6 +23,8 @@ public class Client {
     private String address;
     private String passportNumber;
     private String phoneNumber;
+
+    private final Set<NotificationChannel> channels = new LinkedHashSet<>();   // каналы рассылки
 
     // Конструктор с генерацией уникального id
     Client(String firstName, String lastName) {
@@ -64,6 +73,35 @@ public class Client {
         this.phoneNumber = phoneNumber;
     }
 
+    // Уведомления
+
+    // Добавить канал
+    public void subscribeChannel(NotificationChannel channel) {
+        if (channel == null) {
+            throw new IllegalArgumentException("Канал обязателен");
+        }
+        channels.add(channel);
+    }
+
+    // Удалить канал
+    public void unsubscribeChannel(NotificationChannel channel) {
+        channels.remove(channel);
+    }
+
+    public Set<NotificationChannel> getChannels() {
+        return Collections.unmodifiableSet(channels);
+    }
+
+    // Запустить обновление
+    public void update(String message) {
+        if (channels.isEmpty()) {
+            return;
+        }
+        for (NotificationChannel channel : channels) {
+            channel.send(message);
+        }
+    }
+
     // Клиент сомнительный, если отсутствуют адрес или паспортные данные
     public boolean isDoubtful() {
         return isBlank(address) || isBlank(passportNumber);
@@ -79,6 +117,7 @@ public class Client {
         return "Client{id=" + id
                 + ", name='" + firstName + " " + lastName + '\''
                 + ", status=" + getStatus()
+                + ", channels=" + channels.size()
                 + '}';
     }
 
