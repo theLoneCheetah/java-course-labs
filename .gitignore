@@ -1,5 +1,6 @@
-# IntelliJ IDEA
+# Code redactor
 .idea/
+.vscode/
 *.iml
 *.iws
 *.ipr
